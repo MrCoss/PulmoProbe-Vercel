@@ -17,6 +17,16 @@ const initialState = {
   hypertension: '0', asthma: '0', cirrhosis: '0', other_cancer: '0', treatment_type: TREATMENT_TYPES[0],
 };
 
+// Helper function to map a value to a one-hot encoded object
+const oneHotEncode = (value, prefix, allValues) => {
+  const obj = {};
+  allValues.forEach(val => {
+    const key = `${prefix}_${val}`;
+    obj[key] = value === val ? 1 : 0;
+  });
+  return obj;
+};
+
 // --- Helper Components ---
 const FormField = ({ label, error, children }) => (
   <div className="relative pb-4">
@@ -92,18 +102,24 @@ const PredictionForm = ({ onPredictionComplete }) => {
     setResult(null);
 
     try {
-      // Create a new data object with numerical values for the backend
+      // --- Data Preprocessing for API Call ---
       const requestData = {
-        ...formData,
-        // Convert string values to numbers for the model
+        // Numerical features (convert to correct types)
         age: parseFloat(formData.age),
         bmi: parseFloat(formData.bmi),
         cholesterol_level: parseFloat(formData.cholesterol_level),
-        family_history: parseInt(formData.family_history),
         hypertension: parseInt(formData.hypertension),
         asthma: parseInt(formData.asthma),
         cirrhosis: parseInt(formData.cirrhosis),
         other_cancer: parseInt(formData.other_cancer),
+        family_history_Yes: parseInt(formData.family_history),
+
+        // One-hot encode categorical features
+        ...oneHotEncode(formData.gender, 'gender', GENDERS),
+        ...oneHotEncode(formData.country, 'country', COUNTRIES),
+        ...oneHotEncode(formData.cancer_stage, 'cancer_stage', CANCER_STAGES),
+        ...oneHotEncode(formData.smoking_status, 'smoking_status', SMOKING_STATUSES),
+        ...oneHotEncode(formData.treatment_type, 'treatment_type', TREATMENT_TYPES),
       };
 
       const response = await fetch(API_URL, {
