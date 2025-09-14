@@ -102,9 +102,7 @@ const PredictionForm = ({ onPredictionComplete }) => {
     setResult(null);
 
     try {
-      // --- Data Preprocessing for API Call ---
       const requestData = {
-        // Numerical features (convert to correct types)
         age: parseFloat(formData.age),
         bmi: parseFloat(formData.bmi),
         cholesterol_level: parseFloat(formData.cholesterol_level),
@@ -113,8 +111,6 @@ const PredictionForm = ({ onPredictionComplete }) => {
         cirrhosis: parseInt(formData.cirrhosis),
         other_cancer: parseInt(formData.other_cancer),
         family_history_Yes: parseInt(formData.family_history),
-
-        // One-hot encode categorical features
         ...oneHotEncode(formData.gender, 'gender', GENDERS),
         ...oneHotEncode(formData.country, 'country', COUNTRIES),
         ...oneHotEncode(formData.cancer_stage, 'cancer_stage', CANCER_STAGES),
@@ -125,7 +121,6 @@ const PredictionForm = ({ onPredictionComplete }) => {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Send the pre-processed data to the backend
         body: JSON.stringify(requestData),
       });
 
@@ -167,25 +162,104 @@ const PredictionForm = ({ onPredictionComplete }) => {
         <fieldset disabled={isLoading || result} className="space-y-8 transition-opacity duration-300 group-disabled:opacity-60 group-disabled:pointer-events-none">
 
           <Section title="Demographics" icon={<FiUser />}>
-            <FormField label="Age" error={errors.age}><InputWithIcon name="age" type="number" value={formData.age} onChange={handleChange} icon={<FiHash size={16} />} error={errors.age} /></FormField>
-            <FormField label="Body Mass Index (BMI)" error={errors.bmi}><InputWithIcon name="bmi" type="number" step="0.1" value={formData.bmi} onChange={handleChange} icon={<FiThermometer size={16} />} error={errors.bmi} /></FormField>
-            <FormField label="Gender"><CustomSelect name="gender" value={formData.gender} onChange={handleChange}>{GENDERS.map(g => <option key={g} value={g}>{g}</option>)}</CustomSelect></FormField>
-            <FormField label="Country"><CustomSelect name="country" value={formData.country} onChange={handleChange}>{COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}</CustomSelect></FormField>
+            <FormField label="Age" error={errors.age}>
+              <InputWithIcon
+                name="age"
+                type="number"
+                value={formData.age}
+                onChange={handleChange}
+                icon={<FiHash size={16} />}
+                error={errors.age}
+                min="18"
+                max="100"
+              />
+            </FormField>
+            <FormField label="Body Mass Index (BMI)" error={errors.bmi}>
+              <InputWithIcon
+                name="bmi"
+                type="number"
+                step="0.1"
+                value={formData.bmi}
+                onChange={handleChange}
+                icon={<FiThermometer size={16} />}
+                error={errors.bmi}
+                min="10"
+                max="60"
+              />
+            </FormField>
+            <FormField label="Gender">
+              <CustomSelect name="gender" value={formData.gender} onChange={handleChange}>
+                {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+              </CustomSelect>
+            </FormField>
+            <FormField label="Country">
+              <CustomSelect name="country" value={formData.country} onChange={handleChange}>
+                {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </CustomSelect>
+            </FormField>
           </Section>
 
           <Section title="Medical History" icon={<FiHeart />}>
-            <FormField label="Smoking Status"><CustomSelect name="smoking_status" value={formData.smoking_status} onChange={handleChange}>{SMOKING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}</CustomSelect></FormField>
-            <FormField label="Cholesterol Level" error={errors.cholesterol_level}><InputWithIcon name="cholesterol_level" type="number" value={formData.cholesterol_level} onChange={handleChange} icon={<FiBarChart size={16} />} error={errors.cholesterol_level} /></FormField>
-            <FormField label="Family History of Cancer"><CustomSelect name="family_history" value={formData.family_history} onChange={handleChange}><option value="0">No</option><option value="1">Yes</option></CustomSelect></FormField>
-            <FormField label="History of Other Cancers"><CustomSelect name="other_cancer" value={formData.other_cancer} onChange={handleChange}><option value="0">No</option><option value="1">Yes</option></CustomSelect></FormField>
+            <FormField label="Smoking Status">
+              <CustomSelect name="smoking_status" value={formData.smoking_status} onChange={handleChange}>
+                {SMOKING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </CustomSelect>
+            </FormField>
+            <FormField label="Cholesterol Level" error={errors.cholesterol_level}>
+              <InputWithIcon
+                name="cholesterol_level"
+                type="number"
+                value={formData.cholesterol_level}
+                onChange={handleChange}
+                icon={<FiBarChart size={16} />}
+                error={errors.cholesterol_level}
+                min="100"
+                max="400"
+              />
+            </FormField>
+            <FormField label="Family History of Cancer">
+              <CustomSelect name="family_history" value={formData.family_history} onChange={handleChange}>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </CustomSelect>
+            </FormField>
+            <FormField label="History of Other Cancers">
+              <CustomSelect name="other_cancer" value={formData.other_cancer} onChange={handleChange}>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </CustomSelect>
+            </FormField>
           </Section>
 
           <Section title="Current Condition" icon={<FiActivity />}>
-            <FormField label="Cancer Stage"><CustomSelect name="cancer_stage" value={formData.cancer_stage} onChange={handleChange}>{CANCER_STAGES.map(s => <option key={s} value={s}>{s}</option>)}</CustomSelect></FormField>
-            <FormField label="Treatment Type"><CustomSelect name="treatment_type" value={formData.treatment_type} onChange={handleChange}>{TREATMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</CustomSelect></FormField>
-            <FormField label="Hypertension"><CustomSelect name="hypertension" value={formData.hypertension} onChange={handleChange}><option value="0">No</option><option value="1">Yes</option></CustomSelect></FormField>
-            <FormField label="Asthma"><CustomSelect name="asthma" value={formData.asthma} onChange={handleChange}><option value="0">No</option><option value="1">Yes</option></CustomSelect></FormField>
-            <FormField label="Cirrhosis"><CustomSelect name="cirrhosis" value={formData.cirrhosis} onChange={handleChange}><option value="0">No</option><option value="1">Yes</option></CustomSelect></FormField>
+            <FormField label="Cancer Stage">
+              <CustomSelect name="cancer_stage" value={formData.cancer_stage} onChange={handleChange}>
+                {CANCER_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+              </CustomSelect>
+            </FormField>
+            <FormField label="Treatment Type">
+              <CustomSelect name="treatment_type" value={formData.treatment_type} onChange={handleChange}>
+                {TREATMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </CustomSelect>
+            </FormField>
+            <FormField label="Hypertension">
+              <CustomSelect name="hypertension" value={formData.hypertension} onChange={handleChange}>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </CustomSelect>
+            </FormField>
+            <FormField label="Asthma">
+              <CustomSelect name="asthma" value={formData.asthma} onChange={handleChange}>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </CustomSelect>
+            </FormField>
+            <FormField label="Cirrhosis">
+              <CustomSelect name="cirrhosis" value={formData.cirrhosis} onChange={handleChange}>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </CustomSelect>
+            </FormField>
           </Section>
 
         </fieldset>
