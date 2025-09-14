@@ -92,10 +92,25 @@ const PredictionForm = ({ onPredictionComplete }) => {
     setResult(null);
 
     try {
+      // Create a new data object with numerical values for the backend
+      const requestData = {
+        ...formData,
+        // Convert string values to numbers for the model
+        age: parseFloat(formData.age),
+        bmi: parseFloat(formData.bmi),
+        cholesterol_level: parseFloat(formData.cholesterol_level),
+        family_history: parseInt(formData.family_history),
+        hypertension: parseInt(formData.hypertension),
+        asthma: parseInt(formData.asthma),
+        cirrhosis: parseInt(formData.cirrhosis),
+        other_cancer: parseInt(formData.other_cancer),
+      };
+
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        // Send the pre-processed data to the backend
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
