@@ -1,0 +1,54 @@
+/* src/index.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  BASE LAYER
+  These are the foundational styles for your entire application.
+  - We set scroll-behavior to smooth for anchor links (#).
+  - We define the default background, text color, font, and anti-aliasing for the body.
+  - We set a custom color for text selection for a branded feel.
+  (These assume 'background' and 'text' colors are defined in your tailwind.config.cjs)
+*/
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-gray-50 text-gray-800 antialiased font-sans;
+  }
+  ::selection {
+    @apply bg-blue-600/20 text-blue-800;
+  }
+}
+
+/*
+  COMPONENTS LAYER
+  This layer is intentionally left empty.
+  In our upgraded application, all component styles are now applied
+  directly in the JSX files using Tailwind's utility classes. This is a
+  modern best practice that makes components more self-contained and
+  easier to manage, as you don't have to jump between CSS and JS files.
+*/
+
+/*
+  UTILITIES LAYER
+  These are custom utility styles. Styling the browser scrollbar
+  is a great example of a global utility that enhances the UI.
+*/
+@layer utilities {
+  html::-webkit-scrollbar {
+    @apply w-2;
+  }
+  html::-webkit-scrollbar-track {
+    @apply bg-gray-200;
+  }
+  html::-webkit-scrollbar-thumb {
+    @apply bg-blue-400 rounded-lg;
+  }
+  html::-webkit-scrollbar-thumb:hover {
+    @apply bg-blue-500;
+  }
+}
