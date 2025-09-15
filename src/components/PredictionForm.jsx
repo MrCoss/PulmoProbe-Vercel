@@ -1,4 +1,5 @@
 // src/components/PredictionForm.jsx
+
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,13 +10,12 @@ import {
   FiLoader,
   FiRefreshCw,
   FiBarChart,
+  FiHeart,
+  FiChevronDown,
 } from "react-icons/fi";
 
-//
-// --- Constants for Dropdowns ---
-//
+// --- Data for dropdowns ---
 const GENDERS = ["Male", "Female"];
-
 const COUNTRIES = [
   "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic",
   "Denmark", "Estonia", "Finland", "France", "Germany", "Greece",
@@ -23,43 +23,81 @@ const COUNTRIES = [
   "Malta", "Netherlands", "Poland", "Portugal", "Romania",
   "Slovakia", "Slovenia", "Spain", "Sweden"
 ];
-
 const CANCER_STAGES = ["Stage Ii", "Stage Iii", "Stage Iv"];
-
-const SMOKING_STATUS = [
-  "Never Smoked",
-  "Former Smoker",
-  "Passive Smoker",
-];
-
+const SMOKING_STATUS = ["Never Smoked", "Former Smoker", "Passive Smoker"];
 const TREATMENT_TYPES = ["Combined", "Radiation", "Surgery"];
 
-//
-// --- Component ---
-//
-const PredictionForm = ({ onPrediction }) => {
-  const [formData, setFormData] = useState({
-    age: "",
-    bmi: "",
-    cholesterol_level: "",
-    hypertension: 0,
-    asthma: 0,
-    cirrhosis: 0,
-    other_cancer: 0,
-    family_history: "No",
-    gender: "",
-    country: "",
-    cancer_stage: "",
-    smoking_status: "",
-    treatment_type: "",
-  });
+const initialState = {
+  age: "",
+  bmi: "",
+  cholesterol_level: "",
+  hypertension: 0,
+  asthma: 0,
+  cirrhosis: 0,
+  other_cancer: 0,
+  family_history: "No",
+  gender: GENDERS[0],
+  country: COUNTRIES[0],
+  cancer_stage: CANCER_STAGES[0],
+  smoking_status: SMOKING_STATUS[0],
+  treatment_type: TREATMENT_TYPES[0],
+};
 
+// --- Helper Components ---
+const Section = ({ title, icon, children }) => (
+  <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+    <div className="flex items-center gap-3 mb-4">
+      <div className="text-2xl text-blue-600">{icon}</div>
+      <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+      {children}
+    </div>
+  </div>
+);
+
+const FormField = ({ label, children }) => (
+  <div className="flex flex-col">
+    <label className="text-sm font-semibold text-gray-700 mb-1">{label}</label>
+    {children}
+  </div>
+);
+
+const Input = ({ icon, ...props }) => (
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+      {icon}
+    </div>
+    <input
+      {...props}
+      className="w-full form-input pl-10 pr-3 py-2 bg-slate-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 text-gray-800"
+    />
+  </div>
+);
+
+const Select = ({ icon, children, ...props }) => (
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+      {icon}
+    </div>
+    <select
+      {...props}
+      className="w-full appearance-none form-select pl-10 pr-8 py-2 bg-slate-100 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 text-gray-800"
+    >
+      {children}
+    </select>
+    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+      <FiChevronDown />
+    </div>
+  </div>
+);
+
+// --- PredictionForm Component ---
+const PredictionForm = ({ onPrediction }) => {
+  const [formData, setFormData] = useState(initialState);
   const [loading, setLoading] = useState(false);
   const [prediction, setPrediction] = useState(null);
 
-  //
-  // Handle form input changes
-  //
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -68,78 +106,44 @@ const PredictionForm = ({ onPrediction }) => {
     });
   };
 
-  //
-  // Reset form
-  //
   const resetForm = () => {
-    setFormData({
-      age: "",
-      bmi: "",
-      cholesterol_level: "",
-      hypertension: 0,
-      asthma: 0,
-      cirrhosis: 0,
-      other_cancer: 0,
-      family_history: "No",
-      gender: "",
-      country: "",
-      cancer_stage: "",
-      smoking_status: "",
-      treatment_type: "",
-    });
+    setFormData(initialState);
     setPrediction(null);
   };
 
-  //
-  // Prepare payload and submit
-  //
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     const payload = {
-      // Numeric
       age: parseFloat(formData.age),
       bmi: parseFloat(formData.bmi),
       cholesterol_level: parseFloat(formData.cholesterol_level),
-
-      // Binary
       hypertension: formData.hypertension,
       asthma: formData.asthma,
       cirrhosis: formData.cirrhosis,
       other_cancer: formData.other_cancer,
-
-      // Family History
       family_history_Yes: formData.family_history === "Yes" ? 1 : 0,
-
-      // Gender
       gender_Male: formData.gender === "Male" ? 1 : 0,
     };
 
-    // --- One-hot encode countries ---
     COUNTRIES.forEach((c) => {
-      payload[`country_${c}`] = formData.country === c ? 1 : 0;
+      payload[`country_${c.replace(" ", "_")}`] = formData.country === c ? 1 : 0;
     });
-
-    // --- One-hot encode cancer stages ---
     CANCER_STAGES.forEach((stage) => {
-      payload[`cancer_stage_${stage}`] = formData.cancer_stage === stage ? 1 : 0;
+      payload[`cancer_stage_${stage.replace(" ", "_")}`] = formData.cancer_stage === stage ? 1 : 0;
     });
-
-    // --- One-hot encode smoking status ---
     SMOKING_STATUS.forEach((status) => {
-      payload[`smoking_status_${status}`] = formData.smoking_status === status ? 1 : 0;
+      payload[`smoking_status_${status.replace(" ", "_")}`] = formData.smoking_status === status ? 1 : 0;
     });
-
-    // --- One-hot encode treatment types ---
     TREATMENT_TYPES.forEach((treatment) => {
-      payload[`treatment_type_${treatment}`] = formData.treatment_type === treatment ? 1 : 0;
+      payload[`treatment_type_${treatment.replace(" ", "_")}`] = formData.treatment_type === treatment ? 1 : 0;
     });
-
+    
     console.log("Payload sent to API:", payload);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/predict", {
+      const response = await fetch("https://costaspinto-pulmoprobe.hf.space/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -155,230 +159,186 @@ const PredictionForm = ({ onPrediction }) => {
     }
   };
 
-  //
-  // UI Component
-  //
   return (
-    <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-2xl p-8">
-      <h2 className="text-3xl font-bold mb-6 flex items-center text-gray-800">
-        <FiBarChart className="mr-3 text-blue-600" /> Lung Cancer Survival Prediction
-      </h2>
+    <div className="bg-slate-50 p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-4xl mx-auto border border-slate-200">
+      <h2 className="text-3xl font-bold text-center text-slate-800 mb-8">Lung Cancer Survival Prediction</h2>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Demographics Section */}
+        <Section title="Demographics" icon={<FiUser />}>
+          <FormField label="Age (18-100)">
+            <Input
+              type="number"
+              name="age"
+              value={formData.age}
+              onChange={handleChange}
+              placeholder="e.g. 55"
+              min="18"
+              max="100"
+              required
+            />
+          </FormField>
+          <FormField label="BMI (10-60)">
+            <Input
+              type="number"
+              step="0.1"
+              name="bmi"
+              value={formData.bmi}
+              onChange={handleChange}
+              placeholder="e.g. 22.5"
+              min="10"
+              max="60"
+              required
+            />
+          </FormField>
+          <FormField label="Cholesterol Level (100-400)">
+            <Input
+              type="number"
+              name="cholesterol_level"
+              value={formData.cholesterol_level}
+              onChange={handleChange}
+              placeholder="e.g. 180"
+              min="100"
+              max="400"
+              required
+            />
+          </FormField>
+          <FormField label="Gender">
+            <Select name="gender" value={formData.gender} onChange={handleChange} required>
+              {GENDERS.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Country">
+            <Select name="country" value={formData.country} onChange={handleChange} required>
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </Select>
+          </FormField>
+        </Section>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* --- Numeric Inputs with range helper --- */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            <FiUser className="inline mr-2 text-blue-600" /> Age
-          </label>
-          <input
-            type="number"
-            name="age"
-            value={formData.age}
-            onChange={handleChange}
-            placeholder="Enter age (18-100)"
-            min="18"
-            max="100"
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
+        {/* Medical History Section */}
+        <Section title="Medical History" icon={<FiHeart />}>
+          <FormField label="Hypertension">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                name="hypertension"
+                checked={formData.hypertension === 1}
+                onChange={handleChange}
+                className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
+              />
+              <span className="ml-2 text-gray-700">Yes</span>
+            </label>
+          </FormField>
+          <FormField label="Asthma">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                name="asthma"
+                checked={formData.asthma === 1}
+                onChange={handleChange}
+                className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
+              />
+              <span className="ml-2 text-gray-700">Yes</span>
+            </label>
+          </FormField>
+          <FormField label="Cirrhosis">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                name="cirrhosis"
+                checked={formData.cirrhosis === 1}
+                onChange={handleChange}
+                className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
+              />
+              <span className="ml-2 text-gray-700">Yes</span>
+            </label>
+          </FormField>
+          <FormField label="Other Cancer">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                name="other_cancer"
+                checked={formData.other_cancer === 1}
+                onChange={handleChange}
+                className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
+              />
+              <span className="ml-2 text-gray-700">Yes</span>
+            </label>
+          </FormField>
+          <FormField label="Family History">
+            <Select name="family_history" value={formData.family_history} onChange={handleChange} required>
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </Select>
+          </FormField>
+          <FormField label="Smoking Status">
+            <Select name="smoking_status" value={formData.smoking_status} onChange={handleChange} required>
+              {SMOKING_STATUS.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </Select>
+          </FormField>
+        </Section>
 
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            <FiThermometer className="inline mr-2 text-blue-600" /> BMI
-          </label>
-          <input
-            type="number"
-            step="0.1"
-            name="bmi"
-            value={formData.bmi}
-            onChange={handleChange}
-            placeholder="e.g. 22.5"
-            min="10"
-            max="50"
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
+        {/* Current Condition Section */}
+        <Section title="Current Condition" icon={<FiActivity />}>
+          <FormField label="Cancer Stage">
+            <Select name="cancer_stage" value={formData.cancer_stage} onChange={handleChange} required>
+              {CANCER_STAGES.map((stage) => (
+                <option key={stage} value={stage}>{stage}</option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Treatment Type">
+            <Select name="treatment_type" value={formData.treatment_type} onChange={handleChange} required>
+              {TREATMENT_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </Select>
+          </FormField>
+        </Section>
 
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            <FiActivity className="inline mr-2 text-blue-600" /> Cholesterol Level
-          </label>
-          <input
-            type="number"
-            step="0.1"
-            name="cholesterol_level"
-            value={formData.cholesterol_level}
-            onChange={handleChange}
-            placeholder="e.g. 180"
-            min="100"
-            max="400"
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        {/* --- Boolean toggles --- */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            Medical History
-          </label>
-          <div className="grid grid-cols-2 gap-4">
-            {["hypertension", "asthma", "cirrhosis", "other_cancer"].map((field) => (
-              <label key={field} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name={field}
-                  checked={formData[field] === 1}
-                  onChange={handleChange}
-                  className="w-5 h-5"
-                />
-                <span className="capitalize">{field.replace("_", " ")}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Family History */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">Family History</label>
-          <select
-            name="family_history"
-            value={formData.family_history}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
-          </select>
-        </div>
-
-        {/* Gender */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">Gender</label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select Gender</option>
-            {GENDERS.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Country */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">Country</label>
-          <select
-            name="country"
-            value={formData.country}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select Country</option>
-            {COUNTRIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Cancer Stage */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">Cancer Stage</label>
-          <select
-            name="cancer_stage"
-            value={formData.cancer_stage}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select Stage</option>
-            {CANCER_STAGES.map((stage) => (
-              <option key={stage} value={stage}>{stage}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Smoking Status */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">Smoking Status</label>
-          <select
-            name="smoking_status"
-            value={formData.smoking_status}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select Status</option>
-            {SMOKING_STATUS.map((status) => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Treatment Type */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">Treatment Type</label>
-          <select
-            name="treatment_type"
-            value={formData.treatment_type}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select Treatment</option>
-            {TREATMENT_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Submit & Reset */}
-        <div className="flex justify-between items-center">
-          <button
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-200">
+          <motion.button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 w-48 h-12 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            whileTap={{ scale: 0.98 }}
           >
-            {loading ? (
-              <FiLoader className="animate-spin inline-block mr-2" />
-            ) : (
-              <FiCheckCircle className="inline-block mr-2" />
-            )}
-            Predict
-          </button>
-          <button
+            {loading ? <FiLoader className="animate-spin" /> : <FiCheckCircle />}
+            <span>{loading ? "Predicting..." : "Get Prediction"}</span>
+          </motion.button>
+          <motion.button
             type="button"
             onClick={resetForm}
-            className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600"
+            className="flex items-center justify-center gap-2 w-48 h-12 font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
+            whileTap={{ scale: 0.98 }}
           >
-            <FiRefreshCw className="inline-block mr-2" /> Reset
-          </button>
+            <FiRefreshCw />
+            <span>Reset Form</span>
+          </motion.button>
         </div>
       </form>
 
-      {/* --- Prediction Result --- */}
+      {/* Prediction Result Display */}
       <AnimatePresence>
         {prediction && (
           <motion.div
-            className="mt-8 p-6 bg-gray-100 border rounded-lg shadow-sm"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            className={`mt-8 p-6 rounded-lg shadow-md border ${
+              prediction.risk === "High Risk of Non-Survival" ? "bg-red-100 text-red-800 border-red-200" : "bg-green-100 text-green-800 border-green-200"
+            }`}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
           >
-            <h3 className="font-bold text-lg">Prediction Result</h3>
-            <p className="mt-2 text-gray-700">
-              <strong>Risk:</strong> {prediction.risk}
-            </p>
-            <p className="text-gray-700">
-              <strong>Confidence:</strong> {prediction.confidence}
-            </p>
+            <h3 className="font-bold text-xl mb-2">Prediction Result</h3>
+            <p><strong>Risk:</strong> {prediction.risk}</p>
+            <p><strong>Confidence:</strong> {prediction.confidence}</p>
+            {prediction.error && <p className="text-sm text-red-600 mt-2">Error: {prediction.error}</p>}
           </motion.div>
         )}
       </AnimatePresence>
