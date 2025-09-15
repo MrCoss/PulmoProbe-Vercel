@@ -43,6 +43,17 @@ const initialState = {
   treatment_type: TREATMENT_TYPES[0],
 };
 
+// Helper function to map a value to a one-hot encoded object
+const oneHotEncode = (value, prefix, allValues, spaceSeparator = true) => {
+  const obj = {};
+  allValues.forEach(val => {
+    // Generate the correct key format based on the model's feature names
+    const key = spaceSeparator ? `${prefix}_${val}` : `${prefix}_${val.replace(/ /g, "_")}`;
+    obj[key] = value === val ? 1 : 0;
+  });
+  return obj;
+};
+
 // --- Helper Components ---
 const Section = ({ title, icon, children }) => (
   <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
@@ -127,17 +138,18 @@ const PredictionForm = ({ onPrediction }) => {
       gender_Male: formData.gender === "Male" ? 1 : 0,
     };
 
+    // Correctly one-hot encode all features
     COUNTRIES.forEach((c) => {
       payload[`country_${c.replace(" ", "_")}`] = formData.country === c ? 1 : 0;
     });
     CANCER_STAGES.forEach((stage) => {
-      payload[`cancer_stage_${stage.replace(" ", "_")}`] = formData.cancer_stage === stage ? 1 : 0;
+      payload[`cancer_stage_${stage}`] = formData.cancer_stage === stage ? 1 : 0;
     });
     SMOKING_STATUS.forEach((status) => {
-      payload[`smoking_status_${status.replace(" ", "_")}`] = formData.smoking_status === status ? 1 : 0;
+      payload[`smoking_status_${status}`] = formData.smoking_status === status ? 1 : 0;
     });
     TREATMENT_TYPES.forEach((treatment) => {
-      payload[`treatment_type_${treatment.replace(" ", "_")}`] = formData.treatment_type === treatment ? 1 : 0;
+      payload[`treatment_type_${treatment}`] = formData.treatment_type === treatment ? 1 : 0;
     });
     
     console.log("Payload sent to API:", payload);
