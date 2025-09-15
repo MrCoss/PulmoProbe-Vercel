@@ -1,5 +1,4 @@
 // src/components/PredictionForm.jsx
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,6 +22,7 @@ const COUNTRIES = [
   "Malta", "Netherlands", "Poland", "Portugal", "Romania",
   "Slovakia", "Slovenia", "Spain", "Sweden"
 ];
+// Corrected to match the model's feature names
 const CANCER_STAGES = ["Stage Ii", "Stage Iii", "Stage Iv"];
 const SMOKING_STATUS = ["Never Smoked", "Former Smoker", "Passive Smoker"];
 const TREATMENT_TYPES = ["Combined", "Radiation", "Surgery"];
@@ -44,11 +44,11 @@ const initialState = {
 };
 
 // Helper function to map a value to a one-hot encoded object
-const oneHotEncode = (value, prefix, allValues, spaceSeparator = true) => {
+const oneHotEncode = (value, prefix, allValues) => {
   const obj = {};
   allValues.forEach(val => {
-    // Generate the correct key format based on the model's feature names
-    const key = spaceSeparator ? `${prefix}_${val}` : `${prefix}_${val.replace(/ /g, "_")}`;
+    // Correctly handle spaces and capitalization
+    const key = `${prefix}_${val}`;
     obj[key] = value === val ? 1 : 0;
   });
   return obj;
@@ -138,10 +138,10 @@ const PredictionForm = ({ onPrediction }) => {
       gender_Male: formData.gender === "Male" ? 1 : 0,
     };
 
-    // Correctly one-hot encode all features
     COUNTRIES.forEach((c) => {
-      payload[`country_${c.replace(" ", "_")}`] = formData.country === c ? 1 : 0;
+      payload[`country_${c}`] = formData.country === c ? 1 : 0;
     });
+    // This is the key change to match the backend
     CANCER_STAGES.forEach((stage) => {
       payload[`cancer_stage_${stage}`] = formData.cancer_stage === stage ? 1 : 0;
     });
@@ -151,7 +151,7 @@ const PredictionForm = ({ onPrediction }) => {
     TREATMENT_TYPES.forEach((treatment) => {
       payload[`treatment_type_${treatment}`] = formData.treatment_type === treatment ? 1 : 0;
     });
-    
+
     console.log("Payload sent to API:", payload);
 
     try {
