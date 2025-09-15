@@ -19,12 +19,19 @@ function ScrollToTop() {
 }
 
 function App() {
-  // We lift the state up to the main App component
   const [predictionHistory, setPredictionHistory] = useState([]);
 
-  // This function will be passed down to the form
   const handleNewPrediction = (predictionData) => {
-    setPredictionHistory(prevHistory => [...prevHistory, predictionData]);
+    // Add a unique ID and prepend the new prediction to the history array
+    const newPredictionRecord = {
+      id: Date.now(),
+      inputs: predictionData.inputs,
+      output: {
+        risk: predictionData.risk,
+        confidence: predictionData.confidence,
+      },
+    };
+    setPredictionHistory(prevHistory => [newPredictionRecord, ...prevHistory]);
   };
 
   return (
@@ -34,12 +41,8 @@ function App() {
         <ScrollToTop />
         <main className="flex-grow">
           <Routes>
-            {/* Pass the handler function to the HomePage */}
             <Route path="/" element={<HomePage onNewPrediction={handleNewPrediction} />} />
-            
-            {/* Pass the history state to the DashboardPage */}
             <Route path="/dashboard" element={<DashboardPage history={predictionHistory} />} />
-
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
           </Routes>
